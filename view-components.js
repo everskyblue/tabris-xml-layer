@@ -1,0 +1,220 @@
+import {ViewProperties} from './view-property-components'
+import createStruct from './create-struct'
+import * as tabris from 'tabris'
+
+/**
+* @param {string} orientation
+* @param {object} orientationProperty
+*/
+function existsOrThrowOrientation(orientation, orientationProperty) {
+  if (orientation in orientationProperty) {
+    return true;
+  }
+  throw new Error(`orientation ${orientation} not exists`)
+}
+
+function createMenuInDrawer(item) {
+  let items = Array.isArray(item) ? item : [item];
+
+  return items.map(item => {
+    const flex = FlexView.createContext({
+      orientation: 'horizontal',
+      view_width: 'fill_width',
+      highlightOnTouch: true,
+      padding: 10,
+    });
+    
+    if (item.icon) {
+      flex.append(new tabris.ImageView({
+        image: item.icon.value,
+        centerY: true,
+        margin: {
+          right: 10
+        }
+      }));
+      delete item.icon;
+    }
+    
+    return flex.append(new tabris.TextView({
+      centerY: true,
+      ...createStruct.normalizeAttribute(item)
+    }))
+  })
+}
+
+include.createContext = props => include(props);
+
+export function include({view}) {
+  return require(`../res/view/${view}.json`)
+}
+
+export class View extends tabris.Composite {
+  context = null;
+  align_orientation = null;
+
+  constructor(props, AppContext) {
+    super(props);
+    this.context = AppContext;
+  }
+
+  append(widgets) {
+    let childs = Array.isArray(widgets) ? widgets: [widgets];
+    if (this.align_orientation) childs.forEach(widget => widget.set(this.align_orientation));
+    return super.append(childs);
+  }
+
+  static createContext(props, context) {
+    const attrs = Object.assign({}, props);
+
+    delete props.orientation;
+    delete props.view_width;
+    delete props.view_height;
+
+    if (attrs.view_width && attrs.view_width in ViewProperties.view_width) {
+      props = Object.assign(props, ViewProperties.view_width[attrs.view_width]);
+    }
+    if (attrs.view_height && attrs.view_height in ViewProperties.view_height) {
+      props = Object.assign(props, ViewProperties.view_height[attrs.view_height]);
+    }
+
+    const view = new this(props, context);
+
+    if (attrs.orientation && existsOrThrowOrientation(attrs.orientation, ViewProperties.orientation)) {
+      view.align_orientation = ViewProperties.orientation[attrs.orientation];
+    }
+
+    return view;
+  }
+}
+
+export class FlexView extends View {
+  static createContext(attrs, context) {
+    if ('orientation' in attrs && existsOrThrowOrientation(attrs.orientation, ViewProperties.flex_orientation)) {
+      Object.assign(attrs, ViewProperties.flex_orientation[attrs.orientation]);
+      delete attrs.orientation;
+    }
+    return super.createContext(attrs, context);
+  }
+}
+
+export class HorizontalScrollView extends tabris.ScrollView {
+  constructor(props) {
+    super({
+      direction: 'horizontal',
+      ...props
+    })
+  }
+
+  static createContext(attrs) {
+    return new this(attrs);
+  }
+}
+
+export const root = FlexView.createContext({
+  orientation: 'vertical',
+  view_width: 'fill_width',
+  view_height: 'fill_height'
+})
+
+export class ViewGroup {
+  childs = [];
+  
+  constructor(_, AppContext) {
+    this.context = AppContext;
+  }
+
+  addTo(parent) {
+    parent.append(this.childs)
+  }
+
+  append(widget) {
+    this.childs.push(widget)
+  }
+
+  static createContext(props, context) {
+    return new this(props, context);
+  }
+}
+
+export class RootView extends ViewGroup {
+
+  constructor(props) {
+    super();
+    this.props = props;
+  }
+
+  addTo() {
+    super.addTo(root);
+  }
+}
+
+export class NavigationDrawer extends ViewGroup {
+  constructor({menu}, ctx) {
+    super();
+    this.res = menu;
+    this.context = ctx;
+  }
+
+  addTo() {
+    const menu = require(`../res/menu/${this.res}.json`).menu;
+    
+    let items = !!menu.item ? (Array.isArray(menu.item) ? menu.item : [menu.item]) : [];
+    let groups = !!menu.group ? (Array.isArray(menu.group) ? menu.group : [menu.group]) : [];
+    
+    createStruct.getDoc(groups).forEach(group=>{
+      items.push({isGroup: true, title: group.attrs.title});
+      items.push(...group.childs.item);
+    })
+    
+    let collection = new tabris.CollectionView({
+      left: 0,
+      top: 'prev() 10',
+      right: 0,
+      bottom: 0,
+      cellHeight: (i, type) => type ? 48 : 38,
+      itemCount: items.length,
+      cellType: index => items[index].isGroup,
+      createCell(group) {
+        return group ? new tabris.TextView({
+          padding: 10,
+          textColor: 'gray'
+        }) : FlexView.createContext({
+          orientation: 'horizontal',
+          view_width: 'fill_width',
+          highlightOnTouch: true,
+          padding: 10,
+        });
+      },
+      updateCell(view, i) {
+        let item = items[i];
+        
+        if (view instanceof tabris.TextView) {
+          view.text = item.title.toUpperCase();
+        } else {
+          item = createStruct.normalizeAttribute(item);
+          
+          if (item.icon) {
+            view.append(new tabris.ImageView({
+              image: item.icon,
+              centerY: true
+            }));
+          }
+          
+          view.append(new tabris.TextView({
+            centerY: true,
+            text: item.title,
+            left: (item.icon ? 10 : 30),
+            ...(item.id ? {id: item.id}:{})
+          }))
+          
+          view.onTap(()=> {
+            tabris.drawer.close()
+            this.context.onActionItemSelected();
+          })
+        }
+      }
+    });
+    this.append(collection);
+    super.addTo(tabris.drawer);
+  }
+}
