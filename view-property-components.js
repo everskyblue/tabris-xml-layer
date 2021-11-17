@@ -1,4 +1,4 @@
-import * as tabris from 'tabris'
+import tabris from 'tabris'
 
 export class ViewProperties {
   static view_width = {

@@ -1,11 +1,13 @@
 import {ViewProperties} from './view-property-components'
+import {toArray} from './utils'
 import createStruct from './create-struct'
-import * as tabris from 'tabris'
+import tabris from 'tabris'
+import store from './store'
 
 /**
-* @param {string} orientation
-* @param {object} orientationProperty
-*/
+ * @param {string} orientation
+ * @param {object} orientationProperty
+ */
 function existsOrThrowOrientation(orientation, orientationProperty) {
   if (orientation in orientationProperty) {
     return true;
@@ -14,7 +16,7 @@ function existsOrThrowOrientation(orientation, orientationProperty) {
 }
 
 function createMenuInDrawer(item) {
-  let items = Array.isArray(item) ? item : [item];
+  let items = toArray(item);
 
   return items.map(item => {
     const flex = FlexView.createContext({
@@ -46,6 +48,29 @@ include.createContext = props => include(props);
 
 export function include({view}) {
   return require(`../res/view/${view}.json`)
+}
+
+export class Page extends tabris.Page {
+  constructor(props, AppContext) {
+    super(props);
+    this.context = AppContext;
+    
+    this.on('appear', ()=> {
+      if (store.has(AppContext)) {
+        $(tabris.NavigationView).only().append(store.get(AppContext));
+      }
+    })
+    
+    this.on('disappear', ()=> {
+      if (store.has(AppContext)) {
+        store.get(AppContext).detach();
+      }
+    })
+  }
+  
+  static createContext(props, AppContext) {
+    return new this(props, AppContext);
+  }
 }
 
 export class View extends tabris.Composite {
@@ -158,8 +183,8 @@ export class NavigationDrawer extends ViewGroup {
   addTo() {
     const menu = require(`../res/menu/${this.res}.json`).menu;
     
-    let items = !!menu.item ? (Array.isArray(menu.item) ? menu.item : [menu.item]) : [];
-    let groups = !!menu.group ? (Array.isArray(menu.group) ? menu.group : [menu.group]) : [];
+    let items = toArray(menu.item);
+    let groups = toArray(menu.group);
     
     createStruct.getDoc(groups).forEach(group=>{
       items.push({isGroup: true, title: group.attrs.title});
@@ -185,7 +210,7 @@ export class NavigationDrawer extends ViewGroup {
           padding: 10,
         });
       },
-      updateCell(view, i) {
+      updateCell: (view, i) => {
         let item = items[i];
         
         if (view instanceof tabris.TextView) {
@@ -209,7 +234,7 @@ export class NavigationDrawer extends ViewGroup {
           
           view.onTap(()=> {
             tabris.drawer.close()
-            this.context.onActionItemSelected();
+            setTimeout(() => this.context.onActionItemSelected(), 500);
           })
         }
       }

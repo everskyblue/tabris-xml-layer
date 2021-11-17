@@ -1,6 +1,8 @@
 import {root} from './view-components'
 import createStructView from './create-struct'
-import * as tabris from 'tabris'
+import tabris from 'tabris'
+import store from './store'
+import {toArray, normalizeAttribute} from './utils'
 
 const navigation = new tabris.NavigationView({
   layoutData: 'stretch'
@@ -27,7 +29,14 @@ function ResourceManager(path) {
       return (target[key] = require(`../${path}/${key}.json`));
     }
   })
-} 
+}
+
+export function Intent(ClassView) {
+  if (!store.has(ClassView)) {
+    store.set(ClassView, new ClassView());
+  }
+  store.get(ClassView).onCreate();
+}
 
 export const R = {
   view: ResourceManager('res/view'),
@@ -46,9 +55,20 @@ class Menu {
   
   add(options) {
     this.actions.push(
-      new Action(options)
-      .onSelect(()=> this.appContext.onActionItemSelected(options.i))
+      new tabris.Action(options)
+      .onSelect(()=> this.appContext.onActionItemSelected(options.id))
     );
+  }
+  
+  inflate(resource) {
+    if (resource.menu.group) {
+      throw new Error('the menu in the toolbar does not support groups');
+    }
+    toArray(resource.menu).forEach(item => this.add(normalizeAttribute(item)));
+  }
+  
+  getActions() {
+    return new tabris.WidgetCollection(this.actions);
   }
 }
 
@@ -58,15 +78,20 @@ class EventView {
 
 export class ViewManager extends EventView {
   constructor() {
-    super()
+    super();
     this.onCreateMenuItems(new Menu(this));
+    this.onCreate();
   }
   
   /**
    * @param {object[]} menus
    */
   onCreateMenuItems(menu) {
-    navigation.append(menus.actions);
+    const collectionActions = menu.getActions();
+    if (!store.has(this)) {
+      store.set(this, collectionActions);
+    }
+    navigation.append(collectionActions);
   }
   
   setContentView(view) {

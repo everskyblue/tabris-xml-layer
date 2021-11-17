@@ -1,5 +1,6 @@
 import * as Views from './view-components'
-import * as tabris from 'tabris'
+import { toArray, normalizeAttribute } from './utils'
+import tabris from 'tabris'
 
 function getInstance(name_component, attrs, context) {
   return (name_component in Views) ? Views[name_component].createContext(attrs, context) : new tabris[name_component](attrs);
@@ -24,7 +25,7 @@ function addParentViewGroup(instance, parent) {
 function createStructView(object_view, model, context) {
   for (let name_component in object_view) {
     let values = object_view[name_component];
-    values = Array.isArray(values) ? values : [(values.toString() === '[object Object]' ? values : {})];
+    values = toArray(values);
     const doc = createStructView.getDoc(values);
     for (var i = 0; i < doc.length; i++) {
       let instance = getInstance(name_component, doc[i].attrs, context);
@@ -56,13 +57,5 @@ createStructView.getDoc = values => {
   return doc;
 };
 
-createStructView.normalizeAttribute = obj => {
-  let attrs = {};
-  for (let key in obj) {
-    let prop = obj[key];
-    if (prop.isAttribute) attrs[key] = prop.value;
-  }
-  return attrs;
-}
 
 export default createStructView;
