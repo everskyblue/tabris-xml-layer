@@ -1,4 +1,5 @@
 import {root} from './view-components'
+import {MenuProperties} from './view-property-components'
 import createStructView from './create-struct'
 import tabris from 'tabris'
 import store from './store'
@@ -35,7 +36,10 @@ export function Intent(ClassView) {
   if (!store.has(ClassView)) {
     store.set(ClassView, new ClassView());
   }
-  store.get(ClassView).onCreate();
+  const object = store.get(ClassView);
+  if (object instanceof ViewManager)
+    object.onCreate();
+  return object;
 }
 
 export const R = {
@@ -54,10 +58,25 @@ class Menu {
   }
   
   add(options) {
-    this.actions.push(
-      new tabris.Action(options)
-      .onSelect(()=> this.appContext.onActionItemSelected(options.id))
-    );
+    let optionMenu = new MenuProperties();
+    
+    if (!options.type) options.type = 'text';
+    
+    Object.keys(options).forEach(key => {
+      if (key in MenuProperties) {
+        optionMenu[key](options[key]);
+        delete options[key];
+      }
+    });
+    
+    optionMenu.objectAction.set(options).onSelect(() => {
+      this.appContext.onActionItemSelected(options.id);
+      if (typeof optionMenu.Intent === 'function') {
+        Intent(optionMenu.Intent);
+      }
+    });
+    
+    this.actions.push(optionMenu.objectAction);
   }
   
   inflate(resource) {
