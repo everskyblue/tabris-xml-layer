@@ -8,8 +8,8 @@
     "tojson": "node ./cli.js -w"
   },
   "dependencies": {
-    "fast-xml-parser": "~4.x",
-    "tabris": "latest"
+    "fast-xml-parser": "latest",
+    "tabris": "~3.8.x"
   },
   "bin": {
     "res-json": "./cli.js"
