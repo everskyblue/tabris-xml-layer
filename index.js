@@ -1,9 +1,8 @@
 import {root} from './view-components'
 import {MenuProperties} from './view-property-components'
-import createStructView from './create-struct'
-import tabris from 'tabris'
+import ObjectView from './object-view'
 import store from './store'
-import {toArray, normalizeAttribute} from './utils'
+import tabris from 'tabris'
 
 const navigation = new tabris.NavigationView({
   layoutData: 'stretch'
@@ -119,7 +118,7 @@ export class ViewManager extends EventView {
   
   drawer(view_xml) {
     tabris.drawer.enabled = true;
-    createStructView(view_xml, tabris.drawer, this);
+    (ObjectView.from(this, view_xml, tabris.drawer));
   }
   
   setToolbarVisible(visible) {

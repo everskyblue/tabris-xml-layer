@@ -1,6 +1,4 @@
 import {ViewProperties} from './view-property-components'
-import {toArray} from './utils'
-import createStruct from './create-struct'
 import tabris from 'tabris'
 import store from './store'
 
@@ -13,35 +11,6 @@ function existsOrThrowOrientation(orientation, orientationProperty) {
     return true;
   }
   throw new Error(`orientation ${orientation} not exists`)
-}
-
-function createMenuInDrawer(item) {
-  let items = toArray(item);
-
-  return items.map(item => {
-    const flex = FlexView.createContext({
-      orientation: 'horizontal',
-      view_width: 'fill_width',
-      highlightOnTouch: true,
-      padding: 10,
-    });
-    
-    if (item.icon) {
-      flex.append(new tabris.ImageView({
-        image: item.icon.value,
-        centerY: true,
-        margin: {
-          right: 10
-        }
-      }));
-      delete item.icon;
-    }
-    
-    return flex.append(new tabris.TextView({
-      centerY: true,
-      ...createStruct.normalizeAttribute(item)
-    }))
-  })
 }
 
 include.createContext = props => include(props);
@@ -181,24 +150,30 @@ export class NavigationDrawer extends ViewGroup {
   }
 
   addTo() {
-    const menu = require(`../res/menu/${this.res}.json`).menu;
+    const menu = require(`../res/menu/${this.res}.json`)[0].menu;
     
-    let items = toArray(menu.item);
-    let groups = toArray(menu.group);
+    const items = [];
     
-    createStruct.getDoc(groups).forEach(group=>{
-      items.push({isGroup: true, title: group.attrs.title});
-      items.push(...group.childs.item);
-    })
+    menu.forEach(item => {
+      if (Array.isArray(item.item)) {
+        items.push(item.attributes);
+      } else {
+        item.push(
+          {isGroup: true, title: item.attributes.title},
+          ...item.group.map(group => item.attributes)
+        );
+      }
+      return (item.push(item), false)
+    });
     
     let collection = new tabris.CollectionView({
       left: 0,
       top: 'prev() 10',
       right: 0,
       bottom: 0,
-      cellHeight: (i, type) => type ? 48 : 38,
       itemCount: items.length,
       cellType: index => items[index].isGroup,
+      cellHeight: (_, type) => type ? 48 : 38,
       createCell(group) {
         return group ? new tabris.TextView({
           padding: 10,
@@ -216,8 +191,6 @@ export class NavigationDrawer extends ViewGroup {
         if (view instanceof tabris.TextView) {
           view.text = item.title.toUpperCase();
         } else {
-          item = createStruct.normalizeAttribute(item);
-          
           if (item.icon) {
             view.append(new tabris.ImageView({
               image: item.icon,

@@ -1,12 +1,11 @@
 import * as Views from './view-components'
-import {toArray, normalizeAttribute, separateObjectTypes} from './utils'
-
+import tabris from 'tabris'
 
 export default class ObjectView {
   #mainView;
   #viewGroup;
   
-  inflate(context, object_view, inner_object) {
+  inflate(context, group_view, inner_object) {
     this.#mainView = inner_object;
     this.#viewGroup = this.#convertToObject(context, object_view, inner_object)
     return this;
@@ -32,24 +31,23 @@ export default class ObjectView {
     return (obj instanceof Views.ViewGroup);
   }
   
-  #convertToObject(context, object_view, inner_object) {
+  #convertToObject(context, resource, inner_object) {
     let group = [];
-    for (let name_component in objec_view) {
-      let doc = separateObjectTypes(toArray(object_view[name_component]));
-      for (var i = 0; i < doc.length; i++) {
-        let instance = this.#getInstance(name_component, doc[i].attrs, context);
-        if (typeof inner_object === 'object') {
-          this.#appendChilds(inner_object, instance);
-        } else {
-          group.push(instance);
-        }
-        this.inflate(context, doc[i].childs, instance);
+    for (let struct of resource) {
+      let [nameView, _] = Object.keys(struct);
+      let childs = struct[nameView];
+      let instance = this.#getInstance(nameView, struct.attributes, context);
+      if (typeof inner_object === 'object') {
+        this.#appendChilds(inner_object, instance);
+      } else {
+        group.push(instance);
       }
+      this.inflate(context, childs, instance);
     }
     return group;
   }
   
-  static from(context, resource) {
-    return (new ObjectView()).inflate(context, resource)
+  static from(context, resource, inner_object) {
+    return (new ObjectView()).inflate(context, resource, inner_object);
   }
 }
