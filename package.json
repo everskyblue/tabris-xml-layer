@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "fast-xml-parser": "~4.x",
-    "tabris": "~3.8.x"
+    "tabris": "latest"
   },
   "bin": {
     "res-json": "./cli.js"
