@@ -113,7 +113,7 @@ export class ViewManager extends EventView {
   }
   
   setContentView(view) {
-    createStructView(view, navigation, this);
+    ObjectView.from(this, view, navigation);
   }
   
   drawer(view_xml) {
