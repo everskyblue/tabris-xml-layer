@@ -7,7 +7,7 @@ export default class ObjectView {
   
   inflate(context, group_view, inner_object) {
     this.#mainView = inner_object;
-    this.#viewGroup = this.#convertToObject(context, object_view, inner_object)
+    this.#viewGroup = this.#convertToObject(context, group_view, inner_object)
     return this;
   }
   
@@ -22,8 +22,8 @@ export default class ObjectView {
   #appendChilds(parent, child) {
     if (!this.#isViewGroup(child)) {
       parent.append(child);
-    } else {
-      parent.addTo(child);
+    } else if (this.#isViewGroup(child)) {
+      child.addTo(parent);
     }
   }
   
@@ -37,12 +37,9 @@ export default class ObjectView {
       let [nameView, _] = Object.keys(struct);
       let childs = struct[nameView];
       let instance = this.#getInstance(nameView, struct.attributes, context);
-      if (typeof inner_object === 'object') {
-        this.#appendChilds(inner_object, instance);
-      } else {
-        group.push(instance);
-      }
-      this.inflate(context, childs, instance);
+      this.#convertToObject(context, childs, instance);
+      this.#appendChilds(inner_object, instance);
+      group.push(instance);
     }
     return group;
   }

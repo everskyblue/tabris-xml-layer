@@ -156,14 +156,13 @@ export class NavigationDrawer extends ViewGroup {
     
     menu.forEach(item => {
       if (Array.isArray(item.item)) {
-        items.push(item.attributes);
+        items.unshift(item.attributes);
       } else {
-        item.push(
+        items.push(
           {isGroup: true, title: item.attributes.title},
           ...item.group.map(group => item.attributes)
         );
       }
-      return (item.push(item), false)
     });
     
     let collection = new tabris.CollectionView({

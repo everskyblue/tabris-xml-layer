@@ -62,7 +62,7 @@ class Menu {
     if (!options.type) options.type = 'text';
     
     Object.keys(options).forEach(key => {
-      if (key in MenuProperties) {
+      if (key in optionMenu) {
         optionMenu[key](options[key]);
         delete options[key];
       }
@@ -98,7 +98,6 @@ export class ViewManager extends EventView {
   constructor() {
     super();
     this.onCreateMenuItems(new Menu(this));
-    this.onCreate();
   }
   
   /**

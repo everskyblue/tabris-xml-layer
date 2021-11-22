@@ -1,6 +1,6 @@
 const {tojs, getResource, replacePath} = require('./build');
 const {watch, readFileSync, writeFileSync} = require('fs');
-
+const path = require('path');
 const options = process.argv.slice(2);
 
 const dirs = [
