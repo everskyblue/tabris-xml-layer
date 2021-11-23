@@ -1,6 +1,6 @@
 {
   "name": "tabris-xml-layer",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "una libreria y componente para tabris para desarollar en xml y ejecutarlo al iniciar su aplicacion",
   "main": "./dist/index.js",
   "scripts": {

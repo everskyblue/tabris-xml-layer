@@ -1,4 +1,4 @@
-import {ViewProperties} from './view-property-components'
+import { ViewProperties } from './view-property-components'
 import tabris from 'tabris'
 import store from './store'
 
@@ -15,7 +15,7 @@ function existsOrThrowOrientation(orientation, orientationProperty) {
 
 include.createContext = props => include(props);
 
-export function include({view}) {
+export function include({ view }) {
   return require(`../res/view/${view}.json`)
 }
 
@@ -23,20 +23,20 @@ export class Page extends tabris.Page {
   constructor(props, AppContext) {
     super(props);
     this.context = AppContext;
-    
-    this.on('appear', ()=> {
+
+    this.on('appear', () => {
       if (store.has(AppContext)) {
         $(tabris.NavigationView).only().append(store.get(AppContext));
       }
     })
-    
-    this.on('disappear', ()=> {
+
+    this.on('disappear', () => {
       if (store.has(AppContext)) {
         store.get(AppContext).detach();
       }
     })
   }
-  
+
   static createContext(props, AppContext) {
     return new this(props, AppContext);
   }
@@ -52,7 +52,7 @@ export class View extends tabris.Composite {
   }
 
   append(widgets) {
-    let childs = Array.isArray(widgets) ? widgets: [widgets];
+    let childs = Array.isArray(widgets) ? widgets : [widgets];
     if (this.align_orientation) childs.forEach(widget => widget.set(this.align_orientation));
     return super.append(childs);
   }
@@ -112,7 +112,7 @@ export const root = FlexView.createContext({
 
 export class ViewGroup {
   childs = [];
-  
+
   constructor(_, AppContext) {
     this.context = AppContext;
   }
@@ -143,7 +143,7 @@ export class RootView extends ViewGroup {
 }
 
 export class NavigationDrawer extends ViewGroup {
-  constructor({menu}, ctx) {
+  constructor({ menu }, ctx) {
     super();
     this.res = menu;
     this.context = ctx;
@@ -151,20 +151,21 @@ export class NavigationDrawer extends ViewGroup {
 
   addTo() {
     const menu = require(`../res/menu/${this.res}.json`)[0].menu;
-    
+
     const items = [];
-    
+
     menu.forEach(item => {
       if (Array.isArray(item.item)) {
-        items.unshift(item.attributes);
+        let findIndex = items.findIndex(it => it.isGroup);
+        if (findIndex == -1) findIndex = items.length;
+        items.splice(findIndex, 0, item.attributes);
       } else {
-        items.push(
-          {isGroup: true, title: item.attributes.title},
-          ...item.group.map(group => item.attributes)
+        items.push({ isGroup: true, title: item.attributes.title },
+          ...item.group.map(item => item.attributes)
         );
       }
     });
-    
+
     let collection = new tabris.CollectionView({
       left: 0,
       top: 'prev() 10',
@@ -173,8 +174,8 @@ export class NavigationDrawer extends ViewGroup {
       itemCount: items.length,
       cellType: index => items[index].isGroup,
       cellHeight: (_, type) => type ? 48 : 38,
-      createCell(group) {
-        return group ? new tabris.TextView({
+      createCell(isGroup) {
+        return isGroup ? new tabris.TextView({
           padding: 10,
           textColor: 'gray'
         }) : FlexView.createContext({
@@ -186,7 +187,7 @@ export class NavigationDrawer extends ViewGroup {
       },
       updateCell: (view, i) => {
         let item = items[i];
-        
+
         if (view instanceof tabris.TextView) {
           view.text = item.title.toUpperCase();
         } else {
@@ -196,15 +197,15 @@ export class NavigationDrawer extends ViewGroup {
               centerY: true
             }));
           }
-          
+
           view.append(new tabris.TextView({
             centerY: true,
             text: item.title,
             left: (item.icon ? 10 : 30),
-            ...(item.id ? {id: item.id}:{})
+            ...(item.id ? { id: item.id } : {})
           }))
-          
-          view.onTap(()=> {
+
+          view.onTap(() => {
             tabris.drawer.close()
             setTimeout(() => this.context.onActionItemSelected(), 500);
           })
