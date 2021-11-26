@@ -2,34 +2,13 @@ import {root} from './view-components'
 import {MenuProperties} from './view-property-components'
 import ObjectView from './object-view'
 import store from './store'
-import tabris from 'tabris'
+import {WidgetCollection, drawer} from 'tabris'
 
 const navigation = new tabris.NavigationView({
   layoutData: 'stretch'
 }).appendTo(root);
 
 tabris.contentView.append(root);
-
-function ResourceManager(path) {
-  const target = {};
-  const isFile = path.endsWith('.json');
-  if (isFile) {
-    target[path] = require(`../${path}`);
-  }
-  return new Proxy(target, {
-    get(target, key) {
-      if (key in target) {
-        return target[key];
-      }
-      
-      if (isFile){
-        return (target[path][key]);
-      }
-      
-      return (target[key] = require(`../${path}/${key}.json`));
-    }
-  })
-}
 
 export function Intent(ClassView) {
   if (!store.has(ClassView)) {
@@ -39,15 +18,6 @@ export function Intent(ClassView) {
   if (object instanceof ViewManager)
     object.onCreate();
   return object;
-}
-
-export const R = {
-  view: ResourceManager('res/view'),
-  menu: ResourceManager('res/menus'),
-  style: ResourceManager('res/values/styles.json'),
-  color: ResourceManager('res/values/colors.json'),
-  string: ResourceManager('res/values/strings.json'),
-  attr: ResourceManager('res/values/attrs.json')
 }
 
 class Menu {
@@ -78,15 +48,15 @@ class Menu {
     this.actions.push(optionMenu.objectAction);
   }
   
-  inflate(resource) {
-    if (resource.menu.group) {
+  inflate([resource]) {
+    if (resource.menu.findIndex(item => !!item.group) >= 0) {
       throw new Error('the menu in the toolbar does not support groups');
     }
-    toArray(resource.menu).forEach(item => this.add(normalizeAttribute(item)));
+    resource.menu.forEach(item => this.add(item.attributes));
   }
   
   getActions() {
-    return new tabris.WidgetCollection(this.actions);
+    return new WidgetCollection(this.actions);
   }
 }
 
@@ -116,7 +86,7 @@ export class ViewManager extends EventView {
   }
   
   drawer(view_xml) {
-    tabris.drawer.enabled = true;
+    drawer.enabled = true;
     (ObjectView.from(this, view_xml, tabris.drawer));
   }
   

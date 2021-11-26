@@ -145,16 +145,14 @@ export class RootView extends ViewGroup {
 export class NavigationDrawer extends ViewGroup {
   constructor({ menu }, ctx) {
     super();
-    this.res = menu;
+    this.res = R.menu[menu].shift().menu;
     this.context = ctx;
   }
 
   addTo() {
-    const menu = require(`../res/menu/${this.res}.json`)[0].menu;
-
     const items = [];
 
-    menu.forEach(item => {
+    this.res.forEach(item => {
       if (Array.isArray(item.item)) {
         let findIndex = items.findIndex(it => it.isGroup);
         if (findIndex == -1) findIndex = items.length;
