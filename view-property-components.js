@@ -1,5 +1,4 @@
 import tabris, {Module} from 'tabris'
-import R from './json-resource'
 
 export class ViewProperties {
   static view_width = {
@@ -44,51 +43,47 @@ export class ViewProperties {
 }
 
 export class MenuProperties {
-  #object;
-  #event;
-  #props = {};
-  #type = {
+  _object;
+  _event;
+  _props = {};
+  _type = {
     text: tabris.Action,
     search: tabris.SearchAction
   }
   
   icon(image) {
-    this.#props.image = image;
+    this._props.image = image;
   }
   
   showAsAction(action) {
-    if ('ifRoom' === action) this.#props.placement = 'default';
-    else if ('hidden' === action) this.#props.placement = 'overflow';
+    if ('ifRoom' === action) this._props.placement = 'default';
+    else if ('hidden' === action) this._props.placement = 'overflow';
     else throw new Error(`show action ${action} not valid`);
   }
   
   type(type) {
-    if(!(type in this.#type)) throw new Error(`action type ${typeAction} not valid`);
-    this.#object = this.#type[type];
+    if(!(type in this._type)) throw new Error(`action type ${typeAction} not valid`);
+    this._object = this._type[type];
   }
   
   actionViewClass(classString) {
-    this.#event = Module.execute(Module.load(classString+'.js'), classString+'.js');
-    if (typeof this.#event !== 'function') throw new Error(`not an exported function ${classString}`)
-  }
-  
-  getType() {
-    return this.#type;
+    this._event = Module.execute(Module.load(classString+'.js'), classString+'.js');
+    if (typeof this._event !== 'function') throw new Error(`not and exported function ${classString}`)
   }
   
   get Intent() {
-    return this.#event;
+    return this._event;
   }
   
   get objectAction() {
-    if (typeof this.#object === 'function')
-      this.#object = new this._object(this.#props);
-    return this.#object;
+    if (typeof this._object === 'function')
+      this._object = new this._object(this._props);
+    return this._object;
   }
   
   set objectAction(object) {
-    if (!(object instanceof this.#type.text) || !(object instanceof this.#type.search))
+    if (!(object instanceof this._type.text) || !(object instanceof this._type.search))
       throw new ReferenceError('isn\'t instance of type Action or SearchAction');
-    this.#object = object;
+    this._object = object;
   }
 }

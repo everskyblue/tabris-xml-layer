@@ -2,23 +2,16 @@ import {root} from './view-components'
 import {MenuProperties} from './view-property-components'
 import ObjectView from './object-view'
 import store from './store'
-import {WidgetCollection, drawer} from 'tabris'
+import tabris, {Module} from 'tabris'
+
+export {default as R} from './r'
+export { default as Searchable } from './Searchable'
 
 const navigation = new tabris.NavigationView({
   layoutData: 'stretch'
 }).appendTo(root);
 
 tabris.contentView.append(root);
-
-export function Intent(ClassView) {
-  if (!store.has(ClassView)) {
-    store.set(ClassView, new ClassView());
-  }
-  const object = store.get(ClassView);
-  if (object instanceof ViewManager)
-    object.onCreate();
-  return object;
-}
 
 class Menu {
   constructor(appContext) {
@@ -56,7 +49,7 @@ class Menu {
   }
   
   getActions() {
-    return new WidgetCollection(this.actions);
+    return new tabris.WidgetCollection(this.actions);
   }
 }
 
@@ -86,7 +79,7 @@ export class ViewManager extends EventView {
   }
   
   drawer(view_xml) {
-    drawer.enabled = true;
+    tabris.drawer.enabled = true;
     (ObjectView.from(this, view_xml, tabris.drawer));
   }
   
@@ -113,4 +106,14 @@ export class ViewManager extends EventView {
   get toolbarVisible() {
     return navigation.toolbarVisible;
   }
+}
+
+export function Intent(ClassView) {
+  if (!store.has(ClassView)) {
+    store.set(ClassView, new ClassView());
+  }
+  const object = store.get(ClassView);
+  if (object instanceof ViewManager)
+    object.onCreate();
+  return object;
 }

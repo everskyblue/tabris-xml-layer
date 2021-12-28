@@ -20,9 +20,9 @@ export default class ObjectView {
   }
   
   #appendChilds(parent, child) {
-    if (!this.#isViewGroup(child)) {
+    if (!this.#isViewGroup(child) && parent) {
       parent.append(child);
-    } else if (this.#isViewGroup(child)) {
+    } else if (this.#isViewGroup(child) && parent) {
       child.addTo(parent);
     }
   }

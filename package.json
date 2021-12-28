@@ -1,17 +1,17 @@
 {
   "name": "tabris-xml-layer",
-  "version": "0.2.6",
   "description": "una libreria y componente para tabris para desarollar en xml y ejecutarlo al iniciar su aplicacion",
+  "version": "0.2.7",
   "main": "./dist/index.js",
   "scripts": {
     "start": "tsc -p . -w",
     "tojson": "node ./cli.js -w"
   },
   "dependencies": {
-    "fast-xml-parser": "latest",
+    "fast-xml-parser": "4.0.0-beta.2",
     "tabris": "~3.8.x"
   },
   "bin": {
-    "res-json": "./cli.js"
+    "res-json": "cli.js"
   }
 }

@@ -1,4 +1,6 @@
 import { ViewProperties } from './view-property-components'
+import ObjectView from './object-view'
+import R from './r'
 import tabris from 'tabris'
 import store from './store'
 
@@ -16,7 +18,7 @@ function existsOrThrowOrientation(orientation, orientationProperty) {
 include.createContext = props => include(props);
 
 export function include({ view }) {
-  return require(`../res/view/${view}.json`)
+  return ObjectView.from(R.view[view]).getView().shift();
 }
 
 export class Page extends tabris.Page {
@@ -145,14 +147,16 @@ export class RootView extends ViewGroup {
 export class NavigationDrawer extends ViewGroup {
   constructor({ menu }, ctx) {
     super();
-    this.res = R.menu[menu].shift().menu;
+    this.res = menu;
     this.context = ctx;
   }
 
   addTo() {
+    const menu = require(`../res/menu/${this.res}.json`)[0].menu;
+
     const items = [];
 
-    this.res.forEach(item => {
+    menu.forEach(item => {
       if (Array.isArray(item.item)) {
         let findIndex = items.findIndex(it => it.isGroup);
         if (findIndex == -1) findIndex = items.length;
